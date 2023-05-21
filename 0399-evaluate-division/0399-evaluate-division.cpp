@@ -1,68 +1,36 @@
 class Solution {
 public:
+
+    double dfs(unordered_map<string,vector<pair<string,double>>>&mp, string src, string dst,
+    unordered_map<string,int>&visited ){
+        if(mp.find(src)==mp.end())return -1.0;
+        if(src==dst)return 1;
+        visited[src]=1;
+        for(auto node:mp[src]){
+            if(visited.find(node.first)!=visited.end()) continue;
+            double res = dfs(mp,node.first,dst,visited);
+            if(res!=-1){
+                return res*node.second;
+            }
+        }
+
+        return -1;
+    }
     vector<double> calcEquation(vector<vector<string>>& equations, vector<double>& values, vector<vector<string>>& queries) {
-         int n = equations.size();
-        unordered_map<string, unordered_map<string, double>> graph = buildGraph(equations, values);
-        vector<double> results;
-
-        for (const auto& query : queries) {
-            const string& dividend = query[0];
-            const string& divisor = query[1];
-
-            if (graph.find(dividend) == graph.end() || graph.find(divisor) == graph.end()) {
-                results.push_back(-1.0);
-            } else {
-                results.push_back(bfs(dividend, divisor, graph));
+        unordered_map<string,vector<pair<string,double>>>mp;
+        for(int i =0;i<equations.size();i++){
+            mp[equations[i][0]].push_back({equations[i][1],values[i]});
+            mp[equations[i][1]].push_back({equations[i][0],double(1/values[i])});
+        }
+        int m = queries.size();
+        vector<double>ans(m);
+        for(int i =0;i<m;i++){
+            unordered_map<string,int>visited;
+            if(mp.find(queries[i][0])==mp.end())ans[i]=-1;
+            else{
+                ans[i]=dfs(mp,queries[i][0],queries[i][1],visited);
             }
         }
-
-        return results;
+        return ans;
     }
-
-private:
-    unordered_map<string, unordered_map<string, double>> buildGraph(const vector<vector<string>>& equations, const vector<double>& values) {
-        unordered_map<string, unordered_map<string, double>> graph;
-
-        for (int i = 0; i < equations.size(); i++) {
-            const string& dividend = equations[i][0];
-            const string& divisor = equations[i][1];
-            double value = values[i];
-
-            graph[dividend][divisor] = value;
-            graph[divisor][dividend] = 1.0 / value;
-        }
-
-        return graph;
-    }
-
-    double bfs(const string& start, const string& end, unordered_map<string, unordered_map<string, double>>& graph) {
-        queue<pair<string, double>> q;
-        unordered_set<string> visited;
-        q.push({start, 1.0});
-
-        while (!q.empty()) {
-            string node = q.front().first;
-            double value = q.front().second;
-            q.pop();
-
-            if (node == end) {
-                return value;
-            }
-
-            visited.insert(node);
-
-            for (const auto& neighbor : graph[node]) {
-                const string& neighborNode = neighbor.first;
-                double neighborValue = neighbor.second;
-
-                if (visited.find(neighborNode) == visited.end()) {
-                    q.push({neighborNode, value * neighborValue});
-                }
-            }
-        }
-
-        return -1.0;
-    }
-
-
 };
